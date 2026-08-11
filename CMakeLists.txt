@@ -48,12 +48,19 @@ install(
     RUNTIME DESTINATION bin
     #RUNTIME_DEPENDENCIES
 )
-install(
-    FILES
-        "D:/a_cxx/mingw64/bin/libgcc_s_seh-1.dll"
-        "D:/a_cxx/mingw64/bin/libstdc++-6.dll"
-    DESTINATION bin
-)
+if(WIN32)
+    install(
+        FILES
+            "D:/a_cxx/mingw64/bin/libgcc_s_seh-1.dll"
+            "D:/a_cxx/mingw64/bin/libstdc++-6.dll"
+        DESTINATION bin
+    )
+endif()
+
+if(UNIX AND NOT APPLE)
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.29), libstdc++6 (>= 9)")
+endif()
+
 
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
 
