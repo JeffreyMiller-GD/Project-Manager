@@ -1,13 +1,19 @@
 # prom — Project Manager
 
-**prom** is a lightweight CLI tool for scaffolding, configuring, building, updating, and packaging C++ projects that use CMake, Ninja, and CPack. It generates a ready-to-build project skeleton (with an optional Windows resource/icon file) and wraps the common CMake/Ninja/CPack workflow behind a handful of simple subcommands.
+**prom** is a lightweight CLI tool for scaffolding, configuring, building, running, updating, and packaging C++ projects that use CMake, Ninja, and CPack. It generates a ready-to-build project skeleton (with an optional Windows resource/icon file) and wraps the common CMake/Ninja/CPack workflow behind a handful of simple subcommands.
 
-Current version: **1.00** (`PROJECT_MANAGER_VERSION`)
+Current version: **1.01** (`PROJECT_MANAGER_VERSION`)
+
+## What's New in 1.01
+
+- **Order-independent argument parsing** — the command-line parsing logic was optimized to eliminate the fixed-order requirement. Options such as `-pj <path>`, `--debug` / `--release`, `--verbose`, and `--rc` can now be supplied in any order, and are consistently accepted (with or without the leading `--`) across all subcommands.
+- **New `run` command** — `prom run` builds the project and then **automatically executes the produced binary** after the build finishes. Currently the executable name must still be specified manually via `-bin <executable_name>`; automatic detection of the built binary is planned for a future release.
 
 ## Features
 
-- **Project scaffolding** (`new`) — creates a standard directory layout, a generated `CMakeLists.txt`, a starter `src/main.cpp`, and a Windows `app.rc` resource file (icon inclusion commented out by default), then runs the initial CMake configure step.
+- **Project scaffolding** (`new`) — creates a standard directory layout, a generated `CMakeLists.txt`, a starter `src/main.cpp`, and a Windows `app.rc` resource file (icon inclusion commented out by default, enable with `--rc`), then runs the initial CMake configure step.
 - **Build** (`build`) — invokes `cmake --build` against the debug or release build directory, with optional verbose output.
+- **Run** (`run`) — builds the project and then automatically executes the resulting binary.
 - **Reconfigure** (`update`) — re-runs CMake configuration (`cmake -S ... -B ...`) for the debug or release build directory, useful after editing `CMakeLists.txt`.
 - **Packaging** (`pack`) — runs `cpack` against the generated `CPackConfig.cmake` for the chosen build type.
 - **Tool auto-detection** — automatically locates `cmake`, `ninja`, and `cpack` on first run (via `where`/`which`) and stores their paths in a `config.json` next to the executable. If a tool can't be found, prom prompts for the path interactively and self-repairs the config if it becomes invalid.
@@ -22,7 +28,7 @@ Current version: **1.00** (`PROJECT_MANAGER_VERSION`)
 
 ## Generated Project Layout
 
-Running `prom new <path>` produces:
+Running `prom new -pj <path>` produces:
 
 ```
 <path>/
@@ -39,50 +45,63 @@ Running `prom new <path>` produces:
     └── packages/
 ```
 
-The generated `CMakeLists.txt` targets C++23 by default (configurable), and on Windows can optionally embed `app.rc` as the application icon — see the note printed by `prom new` for how to enable it.
+The generated `CMakeLists.txt` targets C++23 by default (configurable), and on Windows can optionally embed `app.rc` as the application icon — pass `--rc` (or `rc`) to `prom new` to enable it. The note printed by `prom new` explains how the icon file itself must be provided.
 
 ## Usage
 
 ```
-prom <command> ...
+prom <command> [options]
 prom help
 ```
+
+Since 1.01, options may be given in **any order** — the parser no longer requires a fixed positional layout. The project path is always supplied with `-pj <path>`, build modes are selected with `--debug` / `--release` (or their bare forms `debug` / `release`), and conflicting mode flags cannot be combined.
 
 ### `new` — create a new project
 
 ```
-prom new <project_path> [<build_mode>]
+prom new -pj <project_path> [<build_mode>] [--rc]
 ```
 
-- `<build_mode>`: `debug` | `release` | `both` (default: `debug`)
+- `<build_mode>`: `--debug` | `--release` | `--both` (default: `--debug`)
+- `--rc` (or `rc`): enable the Windows resource file / application icon in the generated project
 - Creates the project skeleton described above and runs an initial CMake configure for the selected build mode(s).
 
 ### `build` — build an existing project
 
 ```
-prom build <project_root_path> [<build_type>] [verbose]
+prom build -pj <project_root_path> [<build_type>] [--verbose]
 ```
 
-- `<build_type>`: `debug` | `release` (default: `debug`)
-- Add `verbose` as the final argument for verbose build output.
+- `<build_type>`: `--debug` | `--release` (default: `--debug`)
+- `--verbose` (or `verbose`): enable verbose build output
 - Runs `cmake --build` against `out/build/x64-debug` or `out/build/x64-release`.
+
+### `run` — build and run
+
+```
+prom run -pj <project_root_path> [<build_type>] [--verbose] -bin <executable_name>
+```
+
+- `<build_type>`: `--debug` | `--release` (default: `--debug`)
+- `-bin <executable_name>`: the name of the produced executable (e.g. `myapp.exe` on Windows) — **currently required to be specified manually**
+- Builds the project for the selected build type, then automatically executes the binary from the corresponding `out/build/x64-*` directory.
 
 ### `update` — reconfigure an existing project
 
 ```
-prom update <project_root_path> [<build_type>]
+prom update -pj <project_root_path> [<build_type>]
 ```
 
-- `<build_type>`: `debug` | `release` (default: `debug`)
+- `<build_type>`: `--debug` | `--release` (default: `--debug`)
 - Re-runs the CMake configure step (e.g. after modifying `CMakeLists.txt`).
 
 ### `pack` — package a built project
 
 ```
-prom pack <project_root_path> [<build_type>]
+prom pack -pj <project_root_path> [<build_type>]
 ```
 
-- `<build_type>`: `debug` | `release` (default: `release`)
+- `<build_type>`: `--debug` | `--release` (default: `--release`)
 - Runs `cpack` using the build's `CPackConfig.cmake`, placing output in `out/packages`.
 
 ### `show` — license information
@@ -94,11 +113,11 @@ prom show c   # show redistribution conditions
 
 ### `--version` / `-v` / `--v`
 
-Prints the current prom version (`1.00`).
+Prints the current prom version (`1.01`).
 
 ### `help`
 
-Prints a summary of all commands.
+Prints a summary of all commands, including the new `run` syntax.
 
 ## Configuration
 
