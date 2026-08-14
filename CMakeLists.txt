@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 cmake_minimum_required(VERSION 3.25)
-project(project_manager VERSION 1.00 LANGUAGES CXX)
+project(project_manager VERSION 1.01 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -36,6 +36,7 @@ add_executable(prom
     src/cmd_build.cpp
     src/cmd_update.cpp
     src/cmd_pack.cpp
+    src/cmd_run.cpp
     src/config.cpp
     src/findtool.cpp
     ${APP_ICON_RESOURCE}

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#define PROJECT_MANAGER_VERSION "1.00"
+#define PROJECT_MANAGER_VERSION "1.01"
 
 #include <string>
 #include <string_view>
@@ -37,169 +37,8 @@ int main(int argc, char *argv[]){
     manager::prepare_configuration(con, first, output);
 
     std::filesystem::remove(output);
-    std::filesystem::path exe = argv[0];
-    exe = exe.filename();
-    if(argc >= 2){
-        std::string_view cmd = argv[1];
-        if(cmd == "new"){
-            std::filesystem::path pro_path{};
-            if(argc < 3){
-                std::cerr << std::format("Usage: {} new <project_path> [<build mode>] [rc]\n\n--build mode: debug, release, both;  default: debug", exe.string()) << std::endl;
-                return -1;
-            }
-            pro_path = argv[2];
-            std::string mode{};
-            if(argc >= 4){
-                mode = argv[3];
-                bool rc = false;
-
-                if(argc >= 5){
-                    if(std::strcmp(argv[4], "rc") == 0){
-                        rc = true;
-                    }
-                    else {
-                        std::cerr << "Unknown build option: " << argv[4] << std::endl;
-                    }
-                }
-
-                if(mode == "debug")
-                    manager::cmd_new(pro_path, false, con, false, 23, rc);
-                else if (mode == "release")
-                    manager::cmd_new(pro_path, true, con, false, 23, rc);
-                else if (mode == "both"){
-                    manager::cmd_new(pro_path, true, con, true, 23, rc);
-                }
-                else {
-                    std::cerr << "Unknown build mode: " << mode << std::endl;
-                    return -1;
-                }
-            }
-            else {
-                manager::cmd_new(pro_path, false, con, false, 23, false);
-            }
-        }
-        else if(cmd == "help"){
-            std::cerr << "Usage:\n\n";
-            std::cerr << std::format("{} new <project_path> [<build mode>] [rc]\n\n--build mode: debug, release, both;  default: debug", exe.string()) << std::endl;
-            std::cerr << std::format("\n{} build <project_root_path> [<build_type>] [--verbose]", exe.string()) << std::endl;;
-            std::cerr << std::format("\n{} update <project_root_path> [<build_type>]", exe.string()) << std::endl;
-            std::cerr << std::format("\n{} pack <project_root_path> [<build_type>];  default build_type=release", exe.string()) << std::endl;
-            std::cerr << std::format("\n{} --version ; show version", exe.string()) << std::endl;
-            std::cerr << std::format("\n{} show w ; show warranty message\n{} show c ; show conditions message", exe.string(), exe.string()) << std::endl;
-        }
-        else if (cmd == "pack"){
-            if(argc < 3){
-                std::cerr << std::format("Usage:\n\n {} pack <project_root_path> [<build_type>];  default build_type=release", exe.string()) << std::endl;
-                return -1;
-            }
-            std::filesystem::path ph = argv[2];
-            if(argc >= 4){
-                std::string typ{};
-                typ = argv[3];
-                if(typ == "release"){
-                    manager::cmd_pack(ph, false, con);
-                }
-                else if(typ == "debug"){
-                    manager::cmd_pack(ph, true, con);
-                }
-                else {
-                    std::cerr << "Unknown build mode: " << typ << std::endl;
-                    return -1;
-                }
-            }
-            else {
-                manager::cmd_pack(ph, false, con);
-            }
-        }
-        else if(cmd == "build"){
-            if(argc < 3){
-                std::cerr << std::format("Usage:\n\n {} build <project_root_path> [<build_type>] [--verbose]", exe.string()) << std::endl;
-                return -1;
-            }
-            std::filesystem::path ph;
-            ph = argv[2];
-            std::string typ{};
-            bool verbose = false;
-            if(argc >= 4){
-                typ = argv[3];
-                if(argc >= 5){
-                    if(std::strcmp(argv[4], "verbose") == 0){
-                        verbose = true;
-                    }
-                    else {
-                        std::cerr << "Unknown parameter: " << argv[4] << std::endl;
-                        return -1;
-                    }
-                }
-                if(typ == "release"){
-                    manager::cmd_build(ph, con, verbose, true);
-                }
-                else if(typ == "debug"){
-                    manager::cmd_build(ph, con, verbose, false);
-                }
-                else {
-                    std::cerr << "Unknown build mode: " << typ << std::endl;
-                    return -1;
-                }
-            }
-            else {
-                manager::cmd_build(ph, con, verbose, false);
-            }
-        }
-        else if (cmd == "update"){
-            if(argc < 3){
-                std::cerr << std::format("Usage:\n\n {} update <project_root_path> [<build_type>]", exe.string()) << std::endl;
-                return -1;
-            }
-            std::filesystem::path ph = argv[2];
-            if(argc >= 4){
-                std::string typ ={};
-                typ = argv[3];
-                if(typ == "release"){
-                    manager::cmd_update(ph, true, con);
-                }
-                else if(typ == "debug"){
-                    manager::cmd_update(ph, false, con);
-                }
-                else {
-                    std::cerr << "Unknown build mode: " << typ << std::endl;
-                    return -1;
-                }
-            }
-            else {
-                manager::cmd_update(ph, false, con);
-            }
-        }
-        else if(cmd == "show"){
-            if(argc < 3){
-                std::cerr << "show w -- show warranty message\nshow c -- show conditions message\n";
-                return -1;
-            }
-            if(std::strcmp(argv[2], "w") == 0){
-                show_warranty_full();
-            }
-            else if(std::strcmp(argv[2], "c") == 0){
-                show_conditions();
-            }
-            else {
-                std::cerr << "show w -- show warranty message\nshow c -- show conditions message\n";
-                return -1;
-            }
-        }
-        else if(cmd == "--version" || cmd == "-v" || cmd == "--v"){
-            std::cout << PROJECT_MANAGER_VERSION << std::endl;
-            return 0;
-        }
-        else {
-            std::cerr << "Unknown command: " << argv[1] << std::endl;
-            return -1;
-        }
-    }
-    else {
-        std::cerr << std::format("Usage:\n\n {} <command> ...\nrun \"{} help\" to get help.", exe.string(), exe.string());
-        return -1;
-    }
-    return 0;
+    
+    return manager::main_run(argc, argv, con);
 }
 
 
@@ -326,6 +165,101 @@ void prepare_configuration(configure& con, const std::filesystem::path& first,
             manager::write_config(con);
         }
     }
+}
+
+int main_run(int argc, char *argv[], const configure& con){
+    try{
+    std::filesystem::path exe = argv[0];
+    exe = exe.filename();
+    if(argc >= 2){
+        std::string_view cmd = argv[1];
+        if(cmd == "new"){
+            manager::result res = manager::run_new(argc, argv, con);
+            if(res.code != 0){
+                std::cerr << res.msg << std::endl;   
+            }
+            return res.code;
+        }
+        else if(cmd == "help"){
+            std::cerr << "Usage:\n";
+            std::cerr << std::format("\n\t{} new -pj <project_path> [<build mode>] [rc]\n\n\t--build mode: debug, release, both;  default: debug", exe.string()) << std::endl;
+            std::cerr << std::format("\n\t{} build -pj <project_root_path> [<build_type>] [--verbose]", exe.string()) << std::endl;;
+            std::cerr << std::format("\n\t{} update -pj <project_root_path> [<build_type>]", exe.string()) << std::endl;
+            std::cerr << std::format("\n\t{} pack -pj <project_root_path> [<build_type>];  default build_type=release", exe.string()) << std::endl;
+            std::cerr << std::format("\n\t{} run -pj <project_root_path> [<build_type>] -bin <executable_name>", exe.string()) << std::endl;
+            std::cerr << std::format("\n\t{} --version ; show version", exe.string()) << std::endl;
+            std::cerr << std::format("\n\t{} show w ; show warranty message\n\n\t{} show c ; show conditions message", exe.string(), exe.string()) << std::endl;
+            std::cerr << std::format("\n\t{} help ; to show this message", exe.string());
+            return 0;
+        }
+        else if (cmd == "pack"){
+            
+            manager::result res = manager::run_pack(argc, argv, con);
+            if(res.code != 0){
+                std::cerr << res.msg << std::endl;
+            }
+            return res.code;
+        }
+        else if(cmd == "build"){
+            
+            manager::result res = manager::run_build(argc, argv, con);
+            if(res.code != 0){
+                std::cerr << res.msg << std::endl;
+            }
+            return res.code;
+        }
+        else if (cmd == "update"){
+           
+            manager::result res = manager::run_update(argc, argv, con);
+            if(res.code != 0){
+                std::cerr << res.msg << std::endl;
+            }
+            return res.code;
+        }
+        else if(cmd == "run"){
+            manager::result res = manager::run_run(argc, argv, con);
+            if(res.code != 0){
+                std::cerr << res.msg << std::endl;
+            }
+            return res.code;
+        }
+        else if(cmd == "show"){
+            if(argc < 3){
+                std::cerr << "show w -- show warranty message\nshow c -- show conditions message\n";
+                return -1;
+            }
+            if(std::strcmp(argv[2], "w") == 0){
+                show_warranty_full();
+            }
+            else if(std::strcmp(argv[2], "c") == 0){
+                show_conditions();
+            }
+            else {
+                std::cerr << "show w -- show warranty message\nshow c -- show conditions message\n";
+                return -1;
+            }
+        }
+        else if(cmd == "--version" || cmd == "-v" || cmd == "--v"){
+            std::cout << PROJECT_MANAGER_VERSION << std::endl;
+            return 0;
+        }
+        else {
+            std::cerr << "Unknown command: " << argv[1] << std::endl;
+            return -1;
+        }
+    }
+    else {
+        std::cerr << std::format("Usage:\n\n {} <command> ...\nrun \"{} help\" to get help.", exe.string(), exe.string());
+        return -1;
+    }
+    }
+    catch(const std::exception& e){
+        std::cerr << e.what() << std::endl;
+    }
+    catch(...){
+        std::cerr << "Unknown error occurred" << std::endl;
+    }
+    return 0;
 }
 };
 

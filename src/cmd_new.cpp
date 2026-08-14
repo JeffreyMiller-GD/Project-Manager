@@ -22,6 +22,7 @@ void cmd_new(std::filesystem::path ph, bool rele,const configure& con, bool both
     if(std::filesystem::exists(ph)){
         throw std::runtime_error(std::format("{} exists", ph.string()));
     }
+    
     auto abs = std::filesystem::absolute(ph);
     std::string temp = ph.string();
     if(temp.back() == '/' || temp.back() == '\\'){
@@ -123,5 +124,68 @@ void cmd_new(std::filesystem::path ph, bool rele,const configure& con, bool both
         std::system(std::format("{} -S {} -B {} -G Ninja -DCMAKE_MAKE_PROGRAM={} -DCMAKE_BUILD_TYPE=Debug",con.cmake_ph.string(), ph.string(), x64_debug.string(), con.ninja_ph.generic_string()).c_str());
 
     }
+}
+
+result run_new(int argc, char *argv[], const configure& con){
+
+
+    std::filesystem::path exe = argv[0];
+    exe = exe.filename();
+    if(argc < 3){
+        return {-1, std::format("{} new -pj <project_path> [<build mode>] [rc]\n\n--build mode: debug, release, both;  default: debug", exe.string())};
+    }
+
+    std::filesystem::path pro_ph{};
+
+    bool release = false;
+
+    bool both = false;
+    bool rc = false;
+
+    for(int i = 2; i < argc; ++i){
+        if (std::strcmp(argv[i], "--release") == 0 || std::strcmp(argv[i], "release") == 0){
+            if(!both){
+                release = true;
+            }
+            else {
+                return {-1, "The --both, --debug and --release parameters cannot be used together."};
+            }
+        }
+        else if (std::strcmp(argv[i], "--both") == 0 || std::strcmp(argv[i], "both") == 0){
+            if(!release){
+                both = true;
+            }
+            else {
+                return {-1, "The --both, --debug and --release parameters cannot be used together."};
+            }
+        }
+        else if (std::strcmp(argv[i], "--debug") == 0 || std::strcmp(argv[i], "debug") == 0){
+            if(!both || !release){
+                release = false;
+            }
+            else {
+                return {-1, "The --both, --debug and --release parameters cannot be used together."};
+            }
+        }
+        else if (std::strcmp(argv[i], "--rc") == 0 || std::strcmp(argv[i], "rc") == 0){
+            rc = true;
+        }
+        else if(std::strcmp(argv[i], "-pj") == 0){
+            if(i+1 < argc){
+                pro_ph = argv[++i];
+            }
+            else {
+                return {-1, "The -pj option was used but no value was provided."};
+            }
+        }
+        else {
+            return {-1, std::format("{}: unknown cmd or option", argv[i])};
+        }
+    }
+    if(pro_ph.empty()){
+        throw std::runtime_error("The -pj option was empty.");
+    }
+    manager::cmd_new(pro_ph, release, con, both, 23, rc);
+    return {0, ""};
 }
 };

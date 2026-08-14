@@ -31,6 +31,8 @@
 #include "./config.h"
 namespace manager{
 void cmd_update(std::filesystem::path ph, bool rele, const configure& con);
+
+result run_update(int argc, char *argv[], const configure& con); 
 };
 
 

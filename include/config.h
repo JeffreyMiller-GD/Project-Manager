@@ -53,6 +53,14 @@ public:
     }
 };
 
+class result{
+public:
+    int code;
+    std::string msg;
+    result() : code(0), msg(""){}
+    result(int cod, std::string ms) : code(code), msg(ms){}
+    ~result() = default;
+};
 
 inline std::vector<std::string> cmake_get(
     std::string name,

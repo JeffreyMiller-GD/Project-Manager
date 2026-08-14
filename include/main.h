@@ -35,10 +35,13 @@
 #include "../include/config.h"
 #include "../include/exePath.h"
 #include "../include/findTools.h"
+#include "../include/cmd_run.h"
 namespace manager{
 void prepare_configuration(configure& con, const std::filesystem::path& first,
                             const std::filesystem::path& output);
+int main_run(int argc, char *argv[], const configure& con);
 };
+
 void show_warranty_full();
 void show_conditions();
 #endif

@@ -31,6 +31,8 @@
 #include "./config.h"
 namespace manager{
 void cmd_pack(std::filesystem::path ph, bool rele, const configure& con);
+
+result run_pack(int argc, char *argv[], const configure& con);
 };
 
 #endif

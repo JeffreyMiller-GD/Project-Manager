@@ -33,6 +33,8 @@
 #include "./config.h"
 namespace manager{
 void cmd_build(std::filesystem::path ph,const configure& con , bool verbose = false, bool rele = false);
+
+result run_build(int argc, char *argv[], const configure& con);
 };
 
 

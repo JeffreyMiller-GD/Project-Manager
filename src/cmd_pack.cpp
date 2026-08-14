@@ -36,9 +36,51 @@ void cmd_pack(std::filesystem::path ph, bool debug, const configure& con){
     std::filesystem::path packages = ph / "out/packages";
 
     std::system(std::format("{} --config {} -B {}",con.cpack_ph.string(), x64.string(), packages.string()).c_str());
-    
+     
 }
 
+result run_pack(int argc, char *argv[], const configure& con){
+    std::filesystem::path exe = argv[0];
+    exe = exe.filename();
+    if(argc < 3){
+        return {-1, std::format("Usage:\n\n {} pack <project_root_path> [<build_type>];  default build_type=release", exe.string())};
+    }
+
+    std::filesystem::path pro_ph{};
+    bool debug = false;
+
+    for(int i = 2; i < argc; ++i){
+        if(std::strcmp(argv[i], "--release") == 0 || std::strcmp(argv[i], "release") == 0){
+            if(!debug){
+                debug = false;
+            }
+            else {
+                return {-1, "The --debug and --release parameters cannot be used together."};
+            }
+        }
+        else if(std::strcmp(argv[i], "--debug") == 0 || std::strcmp(argv[i], "debug") == 0){
+            
+            debug = true;
+            
+        }
+        else if(std::strcmp(argv[i], "-pj") == 0){
+            if(i+1 < argc){
+                pro_ph = argv[++i];
+            }
+            else {
+                return {-1, "The -pj option was used but no value was provided."};
+            }
+        }
+        else {
+            return {-1, std::format("{}: unknown cmd or option", argv[i])};
+        }
+    }
+    if(pro_ph.empty()){
+        throw std::runtime_error("The -pj option was empty.");
+    }
+    manager::cmd_pack(pro_ph, debug, con);
+    return {0, ""};
+}
 
 
 };

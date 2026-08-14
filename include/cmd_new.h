@@ -33,7 +33,7 @@ namespace manager{
 
 void cmd_new(std::filesystem::path ph, bool rele,const configure& con, bool both = false, int standard = 23, bool enable = false);
 
-
+result run_new(int argc, char *argv[], const configure& con);
 
 };
 
