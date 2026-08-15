@@ -2,7 +2,15 @@
 
 **prom** is a lightweight CLI tool for scaffolding, configuring, building, running, updating, and packaging C++ projects that use CMake, Ninja, and CPack. It generates a ready-to-build project skeleton (with an optional Windows resource/icon file) and wraps the common CMake/Ninja/CPack workflow behind a handful of simple subcommands.
 
-Current version: **1.01** (`PROJECT_MANAGER_VERSION`)
+Current version: **1.02** (`PROJECT_MANAGER_VERSION`)
+
+## What's New in 1.02
+
+- **No new features** — 1.02 is a maintenance release focused on how prom invokes external executables.
+- **Boost.Process-based process invocation** — every external tool call (`cmake --build`, CMake configure, `cpack`, and the `where`/`which` tool discovery) now runs as a `boost::process` child process (v1 API) instead of a `std::system` shell command. Child output is captured through a pipe (`ipstream`) and streamed to the console line by line.
+- **Tool auto-discovery without redirection** — locating `cmake`, `ninja`, and `cpack` no longer relies on shell redirection into a temporary output file; the discovery output is read directly from the process pipe (the old temp `output.txt` handling was removed).
+- **Shell-injection hygiene** — moving away from `std::system` string commands eliminates the class of shell-injection issues associated with it, even though such attacks are virtually unheard of in this context.
+- **No CLI or behavior changes** — commands, flags, and the `config.json` format are identical to 1.01.
 
 ## What's New in 1.01
 
@@ -16,7 +24,7 @@ Current version: **1.01** (`PROJECT_MANAGER_VERSION`)
 - **Run** (`run`) — builds the project and then automatically executes the resulting binary.
 - **Reconfigure** (`update`) — re-runs CMake configuration (`cmake -S ... -B ...`) for the debug or release build directory, useful after editing `CMakeLists.txt`.
 - **Packaging** (`pack`) — runs `cpack` against the generated `CPackConfig.cmake` for the chosen build type.
-- **Tool auto-detection** — automatically locates `cmake`, `ninja`, and `cpack` on first run (via `where`/`which`) and stores their paths in a `config.json` next to the executable. If a tool can't be found, prom prompts for the path interactively and self-repairs the config if it becomes invalid.
+- **Tool auto-detection** — automatically locates `cmake`, `ninja`, and `cpack` on first run (via `where`/`which`, executed as Boost.Process children) and stores their paths in a `config.json` next to the executable. If a tool can't be found, prom prompts for the path interactively and self-repairs the config if it becomes invalid.
 - Licensed under **GPL-3.0-or-later**; `show w` / `show c` print the warranty and redistribution conditions.
 
 ## Requirements
@@ -25,6 +33,7 @@ Current version: **1.01** (`PROJECT_MANAGER_VERSION`)
 - Ninja
 - CPack (typically bundled with CMake)
 - A C++23-capable compiler toolchain
+- **Boost** (build-time dependency since 1.02) — Boost.Process (v1 API, enabled via `BOOST_PROCESS_USE_V1`) and Boost.Filesystem, e.g. Boost 1.91. Point `BOOST_ROOT` / `BOOST_INCLUDEDIR` / `BOOST_LIBRARYDIR` in `CMakeLists.txt` at your installation (the checked-in defaults reference a local Windows Boost layout and may need adjustment on Linux). On Windows, `ws2_32` is linked as required by Boost.Asio (used by Boost.Process).
 
 ## Generated Project Layout
 
@@ -113,7 +122,7 @@ prom show c   # show redistribution conditions
 
 ### `--version` / `-v` / `--v`
 
-Prints the current prom version (`1.01`).
+Prints the current prom version (`1.02`).
 
 ### `help`
 
