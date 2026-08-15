@@ -28,6 +28,8 @@
 #include <format>
 #include <stdexcept>
 #include "./json.hpp"
+#include <boost/process/v1.hpp>
+
 
 namespace manager{
 class configure {

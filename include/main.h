@@ -37,8 +37,7 @@
 #include "../include/findTools.h"
 #include "../include/cmd_run.h"
 namespace manager{
-void prepare_configuration(configure& con, const std::filesystem::path& first,
-                            const std::filesystem::path& output);
+void prepare_configuration(configure& con, const std::filesystem::path& first);
 int main_run(int argc, char *argv[], const configure& con);
 };
 

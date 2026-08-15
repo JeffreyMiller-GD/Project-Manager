@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#define PROJECT_MANAGER_VERSION "1.01"
+#define PROJECT_MANAGER_VERSION "1.02"
 
 #include <string>
 #include <string_view>
@@ -31,25 +31,22 @@ int main(int argc, char *argv[]){
 
     std::filesystem::path exep = get_executable_path();
     std::filesystem::path first = exep / "config.json";
-    std::filesystem::path output = exep / "output.txt";
+
     manager::configure con{};
   
-    manager::prepare_configuration(con, first, output);
-
-    std::filesystem::remove(output);
+    manager::prepare_configuration(con, first);
     
     return manager::main_run(argc, argv, con);
 }
 
 
 namespace manager{
-void prepare_configuration(configure& con, const std::filesystem::path& first,
-                            const std::filesystem::path& output){
+void prepare_configuration(configure& con, const std::filesystem::path& first){
     if(!std::filesystem::exists(first))
         
     {
         std::array<bool, 3> have = {};
-        manager::auto_get_tool(con, have, output);
+        manager::auto_get_tool(con, have);
         while(!have[0] || !have[1] || !have[2] ){
             std::string c_com{};
 
@@ -118,7 +115,8 @@ void prepare_configuration(configure& con, const std::filesystem::path& first,
                     have[2] = true;
         }
         if(!have[0] || !have[1] || !have[2]){
-            manager::auto_get_tool(con, have, output);
+            manager::auto_get_tool(con, have);
+           
             if(!have[0] || !have[1] || !have[2]){
                 std::cout << "\n\nAutomatic repair failed!, you should enter the path of cmake, ninja or cpack.\n\n";
             }

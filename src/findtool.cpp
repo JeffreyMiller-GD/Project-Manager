@@ -16,93 +16,94 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "../include/findTools.h"
-
+#define CMAKE 0
+#define NINJA 1
+#define CPACK 2
 namespace manager{
-void auto_get_tool(configure& con, std::array<bool, 3>& have,const std::filesystem::path& output){
-    std::ofstream out(output, std::ios::out);
-    if(!out.is_open()){
-        
-        throw std::runtime_error("cannot read config");
+void auto_get_tool(configure& con, std::array<bool, 3>& have){
+    
 
-    }
-    out.close();
-    std::ifstream in(output, std::ios::in);
-    if(!in.is_open()){
-        throw std::runtime_error("cannot read config");
-    }
+    auto tmp_func = [&](std::string cmd, int target) -> int {
+        boost::process::v1::ipstream output;
+        boost::process::v1::child c(cmd, boost::process::v1::std_out > output);
+        c.wait();
+        std::string line{};
+        std::getline(output, line);
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+        
+        switch(target){
+            case 0:{
+                con.cmake_ph = line;
+                
+                break;
+            }
+            case 1:{
+                con.ninja_ph = line;
+                break;
+            }
+            case 2:{
+                con.cpack_ph = line;
+                break;
+            }
+        }
+        
+        
+        int code = c.exit_code();
+        
+        switch(target){
+            case 0:{
+                if(!con.cmake_ph.empty()){
+                    have[target] = true;
+                }
+                break;
+            }
+            case 1:{
+                if(!con.ninja_ph.empty()){
+                    have[target] = true;
+                }
+                break;
+            }
+            case 2:{
+                if(!con.cpack_ph.empty()){
+                    have[target] = true;
+                }
+                break;
+            }
+        }
+
+        return code;
+    };
 #ifdef _WIN32
 
-    std::system(std::format("where.exe cmake > {}", output.string()).c_str());
-    in.close();
-    in.open(output, std::ios::in);
-    if(!in.is_open()){
-        throw std::runtime_error("cannot read config");
-    }
-    in >> con.cmake_ph;
-    if(!con.cmake_ph.empty()){
-        have[0] = true;
-    }
-    std::system(std::format("where.exe ninja > {}", output.string()).c_str());
-    in.close();
-    in.open(output, std::ios::in);
-    if(!in.is_open()){
-        throw std::runtime_error("cannot read config");
-    }
-    in >> con.ninja_ph;
-    if(!con.ninja_ph.empty()){
-        have[1] = true;
-    }
-    std::system(std::format("where.exe cpack > {}", output.string()).c_str());
-    in.close();
-    in.open(output, std::ios::in);
-    if(!in.is_open()){
-        throw std::runtime_error("cannot read config");
-    }
-    in >> con.cpack_ph;
-    if(!con.cpack_ph.empty()){
-        have[2] = true;
-    }
+    tmp_func("where.exe cmake", CMAKE);
+    tmp_func("where.exe ninja", NINJA);
+    tmp_func("where.exe cpack", CPACK);
+    
 #else
-
-    std::system(std::format("which cmake > {}", output.string()).c_str());
-    in.close();
-    in.open(output, std::ios::in);
-    if(!in.is_open()){
-        throw std::runtime_error("cannot read config");
-    }
-    in >> con.cmake_ph;
-    if(!con.cmake_ph.empty()){
-        have[0] = true;
-    }
-    std::system(std::format("which ninja > {}", output.string()).c_str());
-    in.close();
-    in.open(output, std::ios::in);
-    if(!in.is_open()){
-        throw std::runtime_error("cannot read config");
-    }
-    in >> con.ninja_ph;
-    if(!con.ninja_ph.empty()){
-        have[1] = true;
-    }
-    std::system(std::format("which cpack > {}", output.string()).c_str());
-    in.close();
-    in.open(output, std::ios::in);
-    if(!in.is_open()){
-        throw std::runtime_error("cannot read config");
-    }
-    in >> con.cpack_ph;
-    if(!con.cpack_ph.empty()){
-        have[2] = true;
-    }
+    tmp_func("which cmake", CMAKE);
+    tmp_func("which ninja", NINJA);
+    tmp_func("which cpack", CPACK);
 #endif
 
-    if(!std::filesystem::exists(con.cmake_ph)){
+
+    auto file_exists = [](const std::filesystem::path& p) -> bool {
+        std::ifstream f(p);
+        return f.good();
+    };
+
+    
+    if(!file_exists(con.cmake_ph)){
+       
         have[0] = false;
     }
-    if(!std::filesystem::exists(con.ninja_ph)){
+    if(!file_exists(con.ninja_ph)){
+      
         have[1] = false;
     }
-    if(!std::filesystem::exists(con.cpack_ph)){
+    if(!file_exists(con.cpack_ph)){
+        
         have[2] = false;
     }
 

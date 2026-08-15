@@ -28,95 +28,26 @@ void cmd_update(std::filesystem::path ph, bool rele, const configure& con){
 
     std::filesystem::path x64_debug = ph / "out/build/x64-debug";
     std::filesystem::path x64_release = ph / "out/build/x64-release";
-
+    auto tmp_func = [&](std::string cmd) -> int {
+        boost::process::v1::ipstream output;
+        boost::process::v1::child c(cmd, boost::process::v1::std_out > output);
+        c.wait();
+        std::string line{};
+        while(std::getline(output, line)){
+            std::cout << line << std::endl;
+        }
+        return c.exit_code();
+    };
     if(rele){
-        std::system(std::format("{} -S {} -B {} -G Ninja -DCMAKE_MAKE_PROGRAM={} -DCMAKE_BUILD_TYPE=Release",con.cmake_ph.string(), ph.string(), x64_release.string(), con.ninja_ph.generic_string()).c_str());
+        tmp_func(std::format("{} -S {} -B {} -G Ninja -DCMAKE_MAKE_PROGRAM={} -DCMAKE_BUILD_TYPE=Release",con.cmake_ph.string(), ph.string(), x64_release.string(), con.ninja_ph.generic_string()).c_str());
     }
     else {
-        std::system(std::format("{} -S {} -B {} -G Ninja -DCMAKE_MAKE_PROGRAM={} -DCMAKE_BUILD_TYPE=Debug",con.cmake_ph.string(), ph.string(), x64_debug.string(), con.ninja_ph.generic_string()).c_str());
+        tmp_func(std::format("{} -S {} -B {} -G Ninja -DCMAKE_MAKE_PROGRAM={} -DCMAKE_BUILD_TYPE=Debug",con.cmake_ph.string(), ph.string(), x64_debug.string(), con.ninja_ph.generic_string()).c_str());
     }
 }
 
 result run_update(int argc, char *argv[], const configure& con){
-/*
-result run_new(int argc, char *argv[], const configure& con){
 
-
-    std::filesystem::path exe = argv[0];
-    exe = exe.filename();
-    if(argc < 3){
-        return {-1, std::format("Usage: {} new <project_path> [<build mode>] [rc]\n\n--build mode: debug, release, both;  default: debug", exe.string())};
-    }
-
-    std::filesystem::path pro_ph{};
-
-    bool release = false;
-
-    bool both = false;
-    bool rc = false;
-
-    for(int i = 2; i < argc; ++i){
-        if (std::strcmp(argv[i], "--release") == 0 || std::strcmp(argv[i], "release") == 0){
-            if(!both){
-                release = true;
-            }
-            else {
-                return {-1, "The --both, --debug and --release parameters cannot be used together."};
-            }
-        }
-        else if (std::strcmp(argv[i], "--both") == 0 || std::strcmp(argv[i], "both") == 0){
-            if(!release){
-                both = true;
-            }
-            else {
-                return {-1, "The --both, --debug and --release parameters cannot be used together."};
-            }
-        }
-        else if (std::strcmp(argv[i], "--debug") == 0 || std::strcmp(argv[i], "debug") == 0){
-            if(!both || !release){
-                release = false;
-            }
-            else {
-                return {-1, "The --both, --debug and --release parameters cannot be used together."};
-            }
-        }
-        else if (std::strcmp(argv[i], "--rc") == 0 || std::strcmp(argv[i], "rc") == 0){
-            rc = true;
-        }
-        
-        else {
-            pro_ph = argv[i];
-        }
-    }
-    manager::cmd_new(pro_ph, release, con, both, 23, rc);
-    return {0, ""};
-}
-
-
-
-       if(argc < 3){
-                std::cerr << std::format("Usage:\n\n {} update <project_root_path> [<build_type>]", exe.string()) << std::endl;
-                return -1;
-            }
-            std::filesystem::path ph = argv[2];
-            if(argc >= 4){
-                std::string typ ={};
-                typ = argv[3];
-                if(typ == "release"){
-                    manager::cmd_update(ph, true, con);
-                }
-                else if(typ == "debug"){
-                    manager::cmd_update(ph, false, con);
-                }
-                else {
-                    std::cerr << "Unknown build mode: " << typ << std::endl;
-                    return -1;
-                }
-            }
-            else {
-                manager::cmd_update(ph, false, con);
-            }
-*/
 
     std::filesystem::path exe = argv[0];
     exe = exe.filename();

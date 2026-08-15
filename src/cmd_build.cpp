@@ -40,20 +40,30 @@ void cmd_build(std::filesystem::path ph,const configure& con, bool verbose, bool
     }
     ph = temp;
 #endif
+    auto tmp_func = [&](std::string cmd) -> int {
+        boost::process::v1::ipstream output;
+        boost::process::v1::child c(cmd, boost::process::v1::std_out > output);
+        c.wait();
+        std::string line{};
+        while(std::getline(output, line)){
+            std::cout << line << std::endl;
+        }
+        return c.exit_code();
+    };
     if(verbose){
         if(rele){
-            std::system(std::format("{} --build {}/out/build/x64-release --verbose",con.cmake_ph.string(), ph.string()).c_str());
+            tmp_func(std::format("{} --build {}/out/build/x64-release --verbose",con.cmake_ph.string(), ph.string()).c_str());
         }
         else{
-            std::system(std::format("{} --build {}/out/build/x64-debug --verbose",con.cmake_ph.string(), ph.string()).c_str());
+            tmp_func(std::format("{} --build {}/out/build/x64-debug --verbose",con.cmake_ph.string(), ph.string()).c_str());
 
         }
     }else {
         if(rele){
-            std::system(std::format("{} --build {}/out/build/x64-release",con.cmake_ph.string(), ph.string()).c_str());
+            tmp_func(std::format("{} --build {}/out/build/x64-release",con.cmake_ph.string(), ph.string()).c_str());
         }
         else {
-            std::system(std::format("{} --build {}/out/build/x64-debug",con.cmake_ph.string(), ph.string()).c_str());
+            tmp_func(std::format("{} --build {}/out/build/x64-debug",con.cmake_ph.string(), ph.string()).c_str());
         }
     }
     

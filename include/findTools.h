@@ -30,7 +30,7 @@
 #include <stdexcept>
 #include "./config.h"
 namespace manager{
-void auto_get_tool(configure& con, std::array<bool, 3>& have,const std::filesystem::path& output);
+void auto_get_tool(configure& con, std::array<bool, 3>& have);
 };
 
 #endif
