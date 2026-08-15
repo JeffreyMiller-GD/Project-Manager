@@ -40,9 +40,13 @@ void cmd_build(std::filesystem::path ph,const configure& con, bool verbose, bool
     }
     ph = temp;
 #endif
-    auto tmp_func = [&](std::string cmd) -> int {
+    auto tmp_func = [&](const std::vector<std::string>& args) -> int {
         boost::process::v1::ipstream output;
-        boost::process::v1::child c(cmd, boost::process::v1::std_out > output);
+        boost::process::v1::child c(
+            args[0],  
+            std::vector<std::string>(args.begin() + 1, args.end()), 
+            boost::process::v1::std_out > output
+        );
         c.wait();
         std::string line{};
         while(std::getline(output, line)){
@@ -50,20 +54,41 @@ void cmd_build(std::filesystem::path ph,const configure& con, bool verbose, bool
         }
         return c.exit_code();
     };
+    std::vector<std::string> args_r_v ={
+        con.cmake_ph.string(),
+        "--build",
+        ph.string()+"/out/build/x64-release",
+        "--verbose"
+    };
+    std::vector<std::string> args_d_v ={
+        con.cmake_ph.string(),
+        "--build",
+        ph.string()+"/out/build/x64-debug",
+        "--verbose"
+    };
+    std::vector<std::string> args_r ={
+        con.cmake_ph.string(),
+        "--build",
+        ph.string()+"/out/build/x64-release"
+    };
+    std::vector<std::string> args_d ={
+        con.cmake_ph.string(),
+        "--build",
+        ph.string()+"/out/build/x64-debug"
+    };
     if(verbose){
         if(rele){
-            tmp_func(std::format("{} --build {}/out/build/x64-release --verbose",con.cmake_ph.string(), ph.string()).c_str());
+            tmp_func(args_r_v);
         }
         else{
-            tmp_func(std::format("{} --build {}/out/build/x64-debug --verbose",con.cmake_ph.string(), ph.string()).c_str());
-
+            tmp_func(args_d_v);
         }
     }else {
         if(rele){
-            tmp_func(std::format("{} --build {}/out/build/x64-release",con.cmake_ph.string(), ph.string()).c_str());
+            tmp_func(args_r);
         }
         else {
-            tmp_func(std::format("{} --build {}/out/build/x64-debug",con.cmake_ph.string(), ph.string()).c_str());
+            tmp_func(args_d);
         }
     }
     

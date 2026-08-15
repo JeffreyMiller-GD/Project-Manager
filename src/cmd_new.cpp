@@ -109,9 +109,13 @@ void cmd_new(std::filesystem::path ph, bool rele,const configure& con, bool both
 
     out_file.close();
 
-    auto tmp_func = [&](std::string cmd) -> int {
+    auto tmp_func = [&](const std::vector<std::string>& args) -> int {
         boost::process::v1::ipstream output;
-        boost::process::v1::child c(cmd, boost::process::v1::std_out > output);
+        boost::process::v1::child c(
+            args[0],  
+            std::vector<std::string>(args.begin() + 1, args.end()), 
+            boost::process::v1::std_out > output
+        );
         c.wait();
         std::string line{};
         while(std::getline(output, line)){
@@ -119,18 +123,33 @@ void cmd_new(std::filesystem::path ph, bool rele,const configure& con, bool both
         }
         return c.exit_code();
     };
-    
+    std::vector<std::string> args_r = {
+        con.cmake_ph.string(),
+        "-S", ph.string(),
+        "-B", x64_release.string(),
+        "-G", "Ninja",
+        "-DCMAKE_MAKE_PROGRAM=" + con.ninja_ph.generic_string(),
+        "-DCMAKE_BUILD_TYPE=Release"
+    };
+    std::vector<std::string> args_d = {
+        con.cmake_ph.string(),
+        "-S", ph.string(),
+        "-B", x64_release.string(),
+        "-G", "Ninja",
+        "-DCMAKE_MAKE_PROGRAM=" + con.ninja_ph.generic_string(),
+        "-DCMAKE_BUILD_TYPE=Debug"
+    };
     if(!both){
         if(rele){
-            tmp_func(std::format("{} -S {} -B {} -G Ninja -DCMAKE_MAKE_PROGRAM={} -DCMAKE_BUILD_TYPE=Release",con.cmake_ph.string(), ph.string(), x64_release.string(), con.ninja_ph.generic_string()));
+            tmp_func(args_r);
         }
         else {
-            tmp_func(std::format("{} -S {} -B {} -G Ninja -DCMAKE_MAKE_PROGRAM={} -DCMAKE_BUILD_TYPE=Debug",con.cmake_ph.string(), ph.string(), x64_debug.string(), con.ninja_ph.generic_string()));
+            tmp_func(args_d);
         }
     }
     else {
-        tmp_func(std::format("{} -S {} -B {} -G Ninja -DCMAKE_MAKE_PROGRAM={} -DCMAKE_BUILD_TYPE=Release",con.cmake_ph.string(), ph.string(), x64_release.string(), con.ninja_ph.generic_string()));
-        tmp_func(std::format("{} -S {} -B {} -G Ninja -DCMAKE_MAKE_PROGRAM={} -DCMAKE_BUILD_TYPE=Debug",con.cmake_ph.string(), ph.string(), x64_debug.string(), con.ninja_ph.generic_string()));
+        tmp_func(args_r);
+        tmp_func(args_d);
 
     }
 }

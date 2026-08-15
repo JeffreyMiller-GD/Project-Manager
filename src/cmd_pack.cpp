@@ -34,9 +34,14 @@ void cmd_pack(std::filesystem::path ph, bool debug, const configure& con){
         x64 = ph / "out/build/x64-debug/CPackConfig.cmake";
     }
     std::filesystem::path packages = ph / "out/packages";
-    auto tmp_func = [&](std::string cmd) -> int {
+
+    auto tmp_func = [&](const std::vector<std::string>& args) -> int {
         boost::process::v1::ipstream output;
-        boost::process::v1::child c(cmd, boost::process::v1::std_out > output);
+        boost::process::v1::child c(
+            args[0],  
+            std::vector<std::string>(args.begin() + 1, args.end()), 
+            boost::process::v1::std_out > output
+        );
         c.wait();
         std::string line{};
         while(std::getline(output, line)){
@@ -44,7 +49,15 @@ void cmd_pack(std::filesystem::path ph, bool debug, const configure& con){
         }
         return c.exit_code();
     };
-    tmp_func(std::format("{} --config {} -B {}",con.cpack_ph.string(), x64.string(), packages.string()).c_str());
+
+    std::vector<std::string> args ={
+        con.cpack_ph.string(),
+        "--config",
+        x64.string(),
+        "-B", packages.string()
+    };
+
+    tmp_func(args);
      
 }
 
