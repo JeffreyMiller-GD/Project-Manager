@@ -87,7 +87,7 @@ result run_pack(int argc, char *argv[], const configure& con){
     std::filesystem::path exe = argv[0];
     exe = exe.filename();
     if(argc < 3){
-        return {-1, std::format("Usage:\n\n {} pack -pj <project_root_path> [<build_type>];  default build_type=release", exe.string())};
+        return {-1, std::format("Usage:\n\n {} pack [-pj <project_root_path>] [-b <build_path>] [<build_type>];  default build_type=release", exe.string())};
     }
 
     std::filesystem::path pro_ph = std::filesystem::current_path();

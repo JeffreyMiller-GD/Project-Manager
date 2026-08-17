@@ -95,7 +95,7 @@ result run_run(int argc, char *argv[], const configure& con){
     std::filesystem::path exe = argv[0];
     exe = exe.filename();
     if(argc < 3){
-        return {-1, std::format("Usage: {} run -pj <project_root_path> [<build_type>] -bin <executable_name>", exe.string())};
+        return {-1, std::format("Usage: {} run [-pj <project_root_path>] [-b <build_path>] [<build_type>] -bin <executable_name>", exe.string())};
     }
 
     std::filesystem::path pro_ph = std::filesystem::current_path();

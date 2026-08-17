@@ -186,7 +186,7 @@ result run_new(int argc, char *argv[], const configure& con){
     std::filesystem::path exe = argv[0];
     exe = exe.filename();
     if(argc < 3){
-        return {-1, std::format("{} new -pj <project_path> [<build mode>] [rc]\n\n--build mode: debug, release, both;  default: debug", exe.string())};
+        return {-1, std::format("{} new -pj <project_path> [<build_type>] [rc]\n\n--build mode: debug, release, both;  default: debug", exe.string())};
     }
 
     std::filesystem::path pro_ph = std::filesystem::current_path();

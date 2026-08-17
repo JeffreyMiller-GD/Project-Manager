@@ -180,11 +180,11 @@ int main_run(int argc, char *argv[], const configure& con){
         }
         else if(cmd == "help"){
             std::cerr << "Usage:\n";
-            std::cerr << std::format("\n\t{} new -pj <project_path> [<build mode>] [rc]\n\n\t--build mode: debug, release, both;  default: debug", exe.string()) << std::endl;
-            std::cerr << std::format("\n\t{} build -pj <project_root_path> [<build_type>] [--verbose]", exe.string()) << std::endl;;
-            std::cerr << std::format("\n\t{} update -pj <project_root_path> [<build_type>]", exe.string()) << std::endl;
-            std::cerr << std::format("\n\t{} pack -pj <project_root_path> [<build_type>];  default build_type=release", exe.string()) << std::endl;
-            std::cerr << std::format("\n\t{} run -pj <project_root_path> [<build_type>] -bin <executable_name>", exe.string()) << std::endl;
+            std::cerr << std::format("\n\t{} new -pj <project_path> [<build_type>] [rc]\n\n\t--build mode: debug, release, both;  default: debug", exe.string()) << std::endl;
+            std::cerr << std::format("\n\t{} build [-pj <project_root_path>] [-b <build_path>] [<build_type>] [--verbose]", exe.string()) << std::endl;;
+            std::cerr << std::format("\n\t{} update [-pj <project_root_path>] [-b <build_path>] [<build_type>]", exe.string()) << std::endl;
+            std::cerr << std::format("\n\t{} pack [-pj <project_root_path>] [-b <build_path>] [<build_type>];  default build_type=release", exe.string()) << std::endl;
+            std::cerr << std::format("\n\t{} run [-pj <project_root_path>] [-b <build_path>] [<build_type>] -bin <executable_name>", exe.string()) << std::endl;
             std::cerr << std::format("\n\t{} --version ; show version", exe.string()) << std::endl;
             std::cerr << std::format("\n\t{} show w ; show warranty message\n\n\t{} show c ; show conditions message", exe.string(), exe.string()) << std::endl;
             std::cerr << std::format("\n\t{} help ; to show this message", exe.string());
