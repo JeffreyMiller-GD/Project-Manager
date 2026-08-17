@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 cmake_minimum_required(VERSION 3.25)
-project(project_manager VERSION 1.02 LANGUAGES CXX)
+project(project_manager VERSION 1.03 LANGUAGES CXX)
 
 # ============================================================================
 # Boost Configuration

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#define PROJECT_MANAGER_VERSION "1.02"
+#define PROJECT_MANAGER_VERSION "1.03"
 
 #include <string>
 #include <string_view>

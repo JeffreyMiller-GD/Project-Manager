@@ -1,7 +1,7 @@
 #include "../include/cmd_run.h"
 
 namespace manager{
-void cmd_run(std::filesystem::path ph,const configure& con, std::string bin , bool verbose, bool rele){
+void cmd_run(std::filesystem::path ph,const configure& con, std::string bin, std::filesystem::path target_b, bool verbose, bool rele){
     if(!std::filesystem::exists(ph)){
         throw std::runtime_error(std::format("{} does not exists", ph.string()));
     }
@@ -9,7 +9,7 @@ void cmd_run(std::filesystem::path ph,const configure& con, std::string bin , bo
     if(!std::filesystem::is_directory(ph)){
         throw std::runtime_error(std::format("{} is not a directory", ph.string()));
     }
-    
+
     std::string temp = ph.string();
 #ifdef _WIN32
     if(temp.back() == '/' || temp.back() == '\\'){
@@ -24,69 +24,70 @@ void cmd_run(std::filesystem::path ph,const configure& con, std::string bin , bo
 #endif
     auto tmp_func = [&](const std::vector<std::string>& args) -> int {
         boost::process::v1::ipstream output;
+        boost::process::v1::ipstream e_output;
         boost::process::v1::child c(
             args[0],  
             std::vector<std::string>(args.begin() + 1, args.end()), 
-            boost::process::v1::std_out > output
+            boost::process::v1::std_out > output,
+            boost::process::v1::std_err > e_output
         );
+        std::thread out_th([&]()->void{
+            std::string line{};
+            while(std::getline(output, line)){
+                std::cout << line << std::endl;
+            }
+        });
+
+        std::thread err_th([&]()->void{
+            std::string line{};
+            while(std::getline(e_output, line)){
+                std::cerr << line << std::endl;
+            }
+        });
         c.wait();
-        std::string line{};
-        while(std::getline(output, line)){
-            std::cout << line << std::endl;
-        }
+        err_th.join();
+        out_th.join();
+
         return c.exit_code();
     };
-    std::vector<std::string> args_r_v ={
-        con.cmake_ph.string(),
-        "--build",
-        ph.string()+"/out/build/x64-release",
-        "--verbose"
-    };
-    std::vector<std::string> args_d_v ={
-        con.cmake_ph.string(),
-        "--build",
-        ph.string()+"/out/build/x64-debug",
-        "--verbose"
-    };
-    std::vector<std::string> args_r ={
-        con.cmake_ph.string(),
-        "--build",
-        ph.string()+"/out/build/x64-release"
-    };
-    std::vector<std::string> args_d ={
-        con.cmake_ph.string(),
-        "--build",
-        ph.string()+"/out/build/x64-debug"
-    };
-
-    std::vector<std::string> run_para_r ={
-        ph.string()+"/out/build/x64-release/"+bin
-    };
-    std::vector<std::string> run_para_d ={
-        ph.string()+"/out/build/x64-debug/"+bin
-    };
-    if(verbose){
+    std::filesystem::path build_ph{};
+    std::vector<std::string> run_para{};
+    std::string v_type{};
+    if(target_b.empty()){
         if(rele){
-            tmp_func(args_r_v);
-            
-            tmp_func(run_para_r);
-        }
-        else{
-            tmp_func(args_d_v);
-            
-            tmp_func(run_para_d);
-        }
-    }else {
-        if(rele){
-            tmp_func(args_r);
-           
-            tmp_func(run_para_r);
+            build_ph = ph / "out/build/x64-release";
+            run_para.push_back(ph.string()+"/out/build/x64-release/"+bin); 
         }
         else {
-            tmp_func(args_d);
-            
-            tmp_func(run_para_d);
+            build_ph = ph / "out/build/x64-debug";
+            run_para.push_back(ph.string()+"/out/build/x64-debug/"+bin); 
         }
+    }
+    else {
+        build_ph = target_b;
+        run_para.push_back((build_ph / bin).string()); 
+    }
+    if(verbose){
+        v_type = "--verbose";
+    }
+    else {
+        v_type = "";
+    }
+
+    std::vector<std::string> args ={
+        con.cmake_ph.string(),
+        "--build",
+        build_ph.string()
+    };
+
+    
+    int code = tmp_func(args);
+    if(code == 0){
+        std::cout << "\x1B[32;1m[Succeed]-[code=" << code << "]\x1B[0m" << std::endl;
+        tmp_func(run_para);
+    }
+    else {
+        std::cerr << "\x1B[31;1m[Failed!]-[code=" << code << "]\x1b[0m" << std::endl;
     }
 }
 
@@ -97,11 +98,11 @@ result run_run(int argc, char *argv[], const configure& con){
         return {-1, std::format("Usage: {} run -pj <project_root_path> [<build_type>] -bin <executable_name>", exe.string())};
     }
 
-    std::filesystem::path pro_ph{};
+    std::filesystem::path pro_ph = std::filesystem::current_path();
     bool release = false;
     bool verbose = false;
     std::string bin{};
-
+    std::filesystem::path target{};
     for(int i = 2; i < argc; ++i){
         if(std::strcmp(argv[i], "-pj") == 0){
             if(i+1 < argc){
@@ -133,6 +134,15 @@ result run_run(int argc, char *argv[], const configure& con){
         else if(std::strcmp(argv[i], "--verbose") == 0 || std::strcmp(argv[i], "verbose") == 0){
             verbose = true;
         }
+        else if(std::strcmp(argv[i], "-b") == 0){
+            std::cout << "The build type settings will follow the CMake cache, so the build settings you configure will be ineffective.\n";
+            if(i+1 < argc){
+                target = argv[++i];
+            }
+            else {
+                return {-1, "The -b option was used but no value was provided."};
+            }
+        }
         else {
             return {-1, std::format("{}: unknown cmd or option", argv[i])};
         }
@@ -143,7 +153,8 @@ result run_run(int argc, char *argv[], const configure& con){
     if(bin.empty()){
         throw std::runtime_error("The -bin option was empty.");
     }
-    manager::cmd_run(pro_ph, con, bin, verbose, release);
+
+    manager::cmd_run(pro_ph, con, bin, target, verbose, release);
     return {0, ""};
 }
 };

@@ -29,7 +29,8 @@
 #include <stdexcept>
 #include "./json.hpp"
 #include <boost/process/v1.hpp>
-
+#include <thread>
+#include <chrono>
 
 namespace manager{
 class configure {
@@ -60,7 +61,7 @@ public:
     int code;
     std::string msg;
     result() : code(0), msg(""){}
-    result(int cod, std::string ms) : code(code), msg(ms){}
+    result(int cod, std::string ms) : code(cod), msg(ms){}
     ~result() = default;
 };
 

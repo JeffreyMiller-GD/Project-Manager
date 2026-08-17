@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "../include/cmd_new.h"
-
+#include <thread>
+#include <chrono>
 namespace manager{
 void cmd_new(std::filesystem::path ph, bool rele,const configure& con, bool both, int standard, bool enable){
     if(std::filesystem::exists(ph)){
@@ -111,16 +112,30 @@ void cmd_new(std::filesystem::path ph, bool rele,const configure& con, bool both
 
     auto tmp_func = [&](const std::vector<std::string>& args) -> int {
         boost::process::v1::ipstream output;
+        boost::process::v1::ipstream e_output;
         boost::process::v1::child c(
             args[0],  
             std::vector<std::string>(args.begin() + 1, args.end()), 
-            boost::process::v1::std_out > output
+            boost::process::v1::std_out > output,
+            boost::process::v1::std_err > e_output
         );
+        std::thread out_th([&]()->void{
+            std::string line{};
+            while(std::getline(output, line)){
+                std::cout << line << std::endl;
+            }
+        });
+
+        std::thread err_th([&]()->void{
+            std::string line{};
+            while(std::getline(e_output, line)){
+                std::cerr << line << std::endl;
+            }
+        });
         c.wait();
-        std::string line{};
-        while(std::getline(output, line)){
-            std::cout << line << std::endl;
-        }
+        err_th.join();
+        out_th.join();
+
         return c.exit_code();
     };
     std::vector<std::string> args_r = {
@@ -134,23 +149,34 @@ void cmd_new(std::filesystem::path ph, bool rele,const configure& con, bool both
     std::vector<std::string> args_d = {
         con.cmake_ph.string(),
         "-S", ph.string(),
-        "-B", x64_release.string(),
+        "-B", x64_debug.string(),
         "-G", "Ninja",
         "-DCMAKE_MAKE_PROGRAM=" + con.ninja_ph.generic_string(),
         "-DCMAKE_BUILD_TYPE=Debug"
     };
-    if(!both){
-        if(rele){
-            tmp_func(args_r);
+    auto check = [&](int code, int line) -> void {
+        if(code == 0){
+            std::cout << "\x1B[32;1m[Succeed]-[code=" << code << "]\x1B[0m" << std::endl;
         }
         else {
-            tmp_func(args_d);
+            std::cerr << "\x1B[31m[Failed!]-[code=" << code << "]\x1b[0m" << std::endl;
+        }
+    };
+    if(!both){
+        if(rele){
+            int code = tmp_func(args_r);
+            check(code, 0);
+        }
+        else {
+            int code = tmp_func(args_d);
+            check(code, 0);
         }
     }
     else {
-        tmp_func(args_r);
-        tmp_func(args_d);
-
+        int code1 = tmp_func(args_r);
+        check(code1, 0);
+        int code2 = tmp_func(args_d);
+        check(code2, 1);
     }
 }
 
@@ -163,7 +189,7 @@ result run_new(int argc, char *argv[], const configure& con){
         return {-1, std::format("{} new -pj <project_path> [<build mode>] [rc]\n\n--build mode: debug, release, both;  default: debug", exe.string())};
     }
 
-    std::filesystem::path pro_ph{};
+    std::filesystem::path pro_ph = std::filesystem::current_path();
 
     bool release = false;
 

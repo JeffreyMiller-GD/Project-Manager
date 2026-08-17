@@ -18,58 +18,81 @@
 #include "../include/cmd_pack.h"
 
 namespace manager{
-void cmd_pack(std::filesystem::path ph, bool debug, const configure& con){
+void cmd_pack(std::filesystem::path ph, bool debug, const configure& con, std::filesystem::path target_b){
     if(!std::filesystem::exists(ph)){
         throw std::runtime_error(std::format("{} does not exists", ph.string()));
     }
-
     if(!std::filesystem::is_directory(ph)){
         throw std::runtime_error(std::format("{} is not a directory", ph.string()));
     }
-    std::filesystem::path x64{};
-    if(!debug){
-        x64 = ph / "out/build/x64-release/CPackConfig.cmake";
+    std::filesystem::path build_ph{};
+    if(target_b.empty()){
+        if(!debug){
+            build_ph = ph / "out/build/x64-release/CPackConfig.cmake";
+        }
+        else {
+            build_ph = ph / "out/build/x64-debug/CPackConfig.cmake";
+        }
     }
     else {
-        x64 = ph / "out/build/x64-debug/CPackConfig.cmake";
+        build_ph = target_b / "CPackConfig.cmake";
     }
-    std::filesystem::path packages = ph / "out/packages";
 
+    std::filesystem::path packages = ph / "out/packages";
     auto tmp_func = [&](const std::vector<std::string>& args) -> int {
         boost::process::v1::ipstream output;
+        boost::process::v1::ipstream e_output;
         boost::process::v1::child c(
             args[0],  
             std::vector<std::string>(args.begin() + 1, args.end()), 
-            boost::process::v1::std_out > output
+            boost::process::v1::std_out > output,
+            boost::process::v1::std_err > e_output
         );
+        std::thread out_th([&]()->void{
+            std::string line{};
+            while(std::getline(output, line)){
+                std::cout << line << std::endl;
+            }
+        });
+
+        std::thread err_th([&]()->void{
+            std::string line{};
+            while(std::getline(e_output, line)){
+                std::cerr << line << std::endl;
+            }
+        });
         c.wait();
-        std::string line{};
-        while(std::getline(output, line)){
-            std::cout << line << std::endl;
-        }
+        err_th.join();
+        out_th.join();
+
         return c.exit_code();
     };
-
     std::vector<std::string> args ={
         con.cpack_ph.string(),
         "--config",
-        x64.string(),
+        build_ph.string(),
         "-B", packages.string()
     };
-
-    tmp_func(args);
-     
+  
+    int code = tmp_func(args);
+    if(code == 0){
+        std::cout << "\x1B[32;1m[Succeed]-[code=" << code << "]\x1B[0m" << std::endl;
+    }
+    else {
+        std::cerr << "\x1B[31m[Failed!]-[code=" << code << "]\x1b[0m" << std::endl;
+    }
 }
 
 result run_pack(int argc, char *argv[], const configure& con){
     std::filesystem::path exe = argv[0];
     exe = exe.filename();
     if(argc < 3){
-        return {-1, std::format("Usage:\n\n {} pack <project_root_path> [<build_type>];  default build_type=release", exe.string())};
+        return {-1, std::format("Usage:\n\n {} pack -pj <project_root_path> [<build_type>];  default build_type=release", exe.string())};
     }
 
-    std::filesystem::path pro_ph{};
+    std::filesystem::path pro_ph = std::filesystem::current_path();
     bool debug = false;
+    std::filesystem::path target{};
 
     for(int i = 2; i < argc; ++i){
         if(std::strcmp(argv[i], "--release") == 0 || std::strcmp(argv[i], "release") == 0){
@@ -93,6 +116,14 @@ result run_pack(int argc, char *argv[], const configure& con){
                 return {-1, "The -pj option was used but no value was provided."};
             }
         }
+        else if(std::strcmp(argv[i], "-b") == 0){
+            if(i+1 < argc){
+                target = argv[++i];
+            }
+            else {
+                return {-1, "The -b option was used but no value was provided."};
+            }
+        }
         else {
             return {-1, std::format("{}: unknown cmd or option", argv[i])};
         }
@@ -100,7 +131,7 @@ result run_pack(int argc, char *argv[], const configure& con){
     if(pro_ph.empty()){
         throw std::runtime_error("The -pj option was empty.");
     }
-    manager::cmd_pack(pro_ph, debug, con);
+    manager::cmd_pack(pro_ph, debug, con, target);
     return {0, ""};
 }
 

@@ -30,7 +30,7 @@
 #include <stdexcept>
 #include "./config.h"
 namespace manager{
-void cmd_pack(std::filesystem::path ph, bool rele, const configure& con);
+void cmd_pack(std::filesystem::path ph, bool rele, const configure& con, std::filesystem::path target_b);
 
 result run_pack(int argc, char *argv[], const configure& con);
 };

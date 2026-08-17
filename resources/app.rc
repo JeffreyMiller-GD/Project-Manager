@@ -20,8 +20,8 @@
 IDI_ICON1 ICON DISCARDABLE "app.ico"
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION    1,0,2,0
-PRODUCTVERSION 1,0,2,0
+FILEVERSION    1,0,3,0
+PRODUCTVERSION 1,0,3,0
 
 FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK
 FILEFLAGS      0
@@ -38,12 +38,12 @@ FILESUBTYPE    VFT2_UNKNOWN
         BEGIN
 
             VALUE "FileDescription",  "Project Manager"
-            VALUE "FileVersion",      "1.0.2.0"
+            VALUE "FileVersion",      "1.0.3.0"
             VALUE "InternalName",     "project_manager"
             VALUE "LegalCopyright",   "Copyright (C) 2026 Yvhang Cai(Jeffrey_Miller). Licensed under GPL-3.0-or-later."
             VALUE "ProductName",      "project_manager"
-            VALUE "ProductVersion",   "1.0.2"
-            VALUE "OriginalFilename", "project_manager.exe"
+            VALUE "ProductVersion",   "1.0.3"
+            VALUE "OriginalFilename", "prom.exe"
             VALUE "CompanyName",      "None"
 
         END

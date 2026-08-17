@@ -18,7 +18,7 @@
 #include "../include/cmd_update.h"
 
 namespace manager{
-void cmd_update(std::filesystem::path ph, bool rele, const configure& con){
+void cmd_update(std::filesystem::path ph, bool rele, const configure& con, std::filesystem::path target_b){
     if(!std::filesystem::exists(ph)){
         throw std::runtime_error(std::format("{} does not exist", ph.string()));
     }
@@ -26,43 +26,68 @@ void cmd_update(std::filesystem::path ph, bool rele, const configure& con){
         throw std::runtime_error(std::format("{} is not a directory", ph.string()));
     }
 
-    std::filesystem::path x64_debug = ph / "out/build/x64-debug";
-    std::filesystem::path x64_release = ph / "out/build/x64-release";
+    std::filesystem::path build_ph{};
+    std::string type{};
+    if(target_b.empty()){
+        if(rele){
+            build_ph = ph / "out/build/x64-release";
+        }
+        else {
+            build_ph = ph / "out/build/x64-debug";
+        }
+    }
+    else {
+        build_ph = target_b;
+    }
+    if(rele){
+        type = "Release";
+    }
+    else {
+        type = "Debug";
+    }
     auto tmp_func = [&](const std::vector<std::string>& args) -> int {
         boost::process::v1::ipstream output;
+        boost::process::v1::ipstream e_output;
         boost::process::v1::child c(
             args[0],  
             std::vector<std::string>(args.begin() + 1, args.end()), 
-            boost::process::v1::std_out > output
+            boost::process::v1::std_out > output,
+            boost::process::v1::std_err > e_output
         );
+        std::thread out_th([&]()->void{
+            std::string line{};
+            while(std::getline(output, line)){
+                std::cout << line << std::endl;
+            }
+        });
+
+        std::thread err_th([&]()->void{
+            std::string line{};
+            while(std::getline(e_output, line)){
+                std::cerr << line << std::endl;
+            }
+        });
         c.wait();
-        std::string line{};
-        while(std::getline(output, line)){
-            std::cout << line << std::endl;
-        }
+        err_th.join();
+        out_th.join();
+
         return c.exit_code();
     };
-    std::vector<std::string> args_r = {
+    std::vector<std::string> args = {
         con.cmake_ph.string(),
         "-S", ph.string(),
-        "-B", x64_release.string(),
+        "-B", build_ph.string(),
         "-G", "Ninja",
         "-DCMAKE_MAKE_PROGRAM=" + con.ninja_ph.generic_string(),
-        "-DCMAKE_BUILD_TYPE=Release"
+        "-DCMAKE_BUILD_TYPE="+type,
     };
-    std::vector<std::string> args_d = {
-        con.cmake_ph.string(),
-        "-S", ph.string(),
-        "-B", x64_release.string(),
-        "-G", "Ninja",
-        "-DCMAKE_MAKE_PROGRAM=" + con.ninja_ph.generic_string(),
-        "-DCMAKE_BUILD_TYPE=Debug"
-    };
-    if(rele){
-        tmp_func(args_r);
+
+    int code = tmp_func(args);
+    if(code == 0){
+        std::cout << "\x1B[32;1m[Succeed]-[code=" << code << "]\x1B[0m" << std::endl;
     }
     else {
-        tmp_func(args_d);
+        std::cerr << "\x1B[31m[Failed!]-[code=" << code << "]\x1b[0m" << std::endl;
     }
 }
 
@@ -72,12 +97,12 @@ result run_update(int argc, char *argv[], const configure& con){
     std::filesystem::path exe = argv[0];
     exe = exe.filename();
     if(argc < 3){
-        return {-1, std::format("Usage:\n\n {} update <project_root_path> [<build_type>]", exe.string())};
+        return {-1, std::format("Usage:\n\n {} update [-pj <project_root_path>] [-b <build_path>] [<build_type>]", exe.string())};
     }
 
-    std::filesystem::path pro_ph{};
+    std::filesystem::path pro_ph = std::filesystem::current_path();
     bool release = false;
-
+    std::filesystem::path target{};
     for(int i = 2; i < argc; ++i){
         
         if(std::strcmp(argv[i], "--release") == 0 || std::strcmp(argv[i], "release") == 0){
@@ -100,14 +125,20 @@ result run_update(int argc, char *argv[], const configure& con){
                 return {-1, "The -pj option was used but no value was provided."};
             }
         }
+        else if(std::strcmp(argv[i], "-b") == 0){
+            if(i+1 < argc){
+                target = argv[++i];
+            }
+            else {
+                return {-1, "The -b option was used but no value was provided."};
+            }
+        }
         else {
             return {-1, std::format("{}: unknown cmd or option", argv[i])};
         }
     }
-    if(pro_ph.empty()){
-        throw std::runtime_error("The -pj option was empty.");
-    }
-    manager::cmd_update(pro_ph, release, con);
+ 
+    manager::cmd_update(pro_ph, release, con, target);
     return {0, ""};
 }
 };
