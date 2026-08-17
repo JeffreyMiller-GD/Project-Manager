@@ -33,10 +33,15 @@ project(project_manager VERSION 1.03 LANGUAGES CXX)
 #   set(BOOST_INCLUDEDIR "/home/user/libs/boost_1_91_0")
 #   set(BOOST_LIBRARYDIR "/home/user/libs/boost_1_91_0/stage/lib")
 # ============================================================================
-set(BOOST_ROOT "D:/Libraries/boost_1_91_0")
-set(BOOST_INCLUDEDIR "D:/Libraries/boost_1_91_0")
-set(BOOST_LIBRARYDIR "D:/Libraries/boost_1_91_0/stage/lib")
-
+if(WIN32)
+    set(BOOST_ROOT "D:/Libraries/boost_1_91_0")
+    set(BOOST_INCLUDEDIR "D:/Libraries/boost_1_91_0")
+    set(BOOST_LIBRARYDIR "D:/Libraries/boost_1_91_0/stage/lib")
+elseif(UNIX AND NOT APPLE)
+    set(BOOST_ROOT "/home/json/Libraries/boost_1_92_0")
+    set(BOOST_INCLUDEDIR "/home/json/Libraries/boost_1_92_0")
+    set(BOOST_LIBRARYDIR "/home/json/Libraries/boost_1_92_0/stage/lib")
+endif()
 # Force Boost.Process to use v1 API
 add_definitions(-DBOOST_PROCESS_USE_V1)
 
@@ -93,9 +98,19 @@ target_include_directories(prom PRIVATE ${BOOST_INCLUDEDIR})
 # Windows (MinGW) example:  libboost_filesystem-mgw16-mt-d-x64-1_91.a
 # Linux (GCC) example:      libboost_filesystem.a  or  libboost_filesystem.so
 # ============================================================================
-target_link_libraries(prom PRIVATE
-    ${BOOST_LIBRARYDIR}/libboost_filesystem-mgw16-mt-d-x64-1_91.a
-)
+if(WIN32)
+    target_link_libraries(prom PRIVATE
+        ${BOOST_LIBRARYDIR}/libboost_filesystem-mgw16-mt-d-x64-1_91.a
+    )
+elseif(UNIX AND NOT APPLE)
+    target_link_libraries(prom PRIVATE
+        ${BOOST_LIBRARYDIR}/libboost_filesystem.a
+    
+        # ${BOOST_LIBRARYDIR}/libboost_system.a
+        
+        # ${BOOST_LIBRARYDIR}/libboost_thread.a
+    )
+endif()
 
 # ============================================================================
 # Platform-Specific Dependencies
@@ -109,10 +124,10 @@ target_link_libraries(prom PRIVATE
 if(WIN32)
     # Windows Socket Library (required by Boost.Asio)
     target_link_libraries(prom PRIVATE ws2_32)
-else()
+elseif(UNIX AND NOT APPLE)
     # Linux: pthread is required for Boost libraries
     # Uncomment the line below if you encounter undefined references to pthread
-    # target_link_libraries(prom PRIVATE pthread)
+    target_link_libraries(prom PRIVATE pthread)
 endif()
 
 # ============================================================================
