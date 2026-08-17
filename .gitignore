@@ -25,12 +25,6 @@ Makefile
 *.swp
 *~
 
-token_stream.cpp
+README_NEO.md
 
-shell.cpp
-
-token.hpp
-
-token_stream.hpp
-
-shell.hpp
+release.md
