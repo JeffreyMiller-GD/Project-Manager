@@ -104,6 +104,7 @@ result run_run(int argc, char *argv[], const configure& con){
     bool release = false;
     bool verbose = false;
     init ini{};
+    std::string bin{};
     
     std::filesystem::path target{};
     for(int i = 2; i < argc; ++i){
@@ -117,7 +118,7 @@ result run_run(int argc, char *argv[], const configure& con){
         }
         else if (std::strcmp(argv[i], "-bin") == 0){
             if(i+1 < argc){
-                ini.exe = argv[++i];
+                bin = argv[++i];
                 
             }
             else {
@@ -165,7 +166,9 @@ result run_run(int argc, char *argv[], const configure& con){
         
         from_json(j, ini);
     }
-    
+    if(!bin.empty()){
+        ini.exe = bin;
+    }
     std::cout << ini.exe << ": the executable\n\n";
 
     manager::cmd_run(pro_ph, con, ini, target, verbose, release);
