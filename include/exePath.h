@@ -54,4 +54,4 @@ static inline std::filesystem::path get_executable_path() {
 #endif
 }
 
-#endif
+#endif //exePath.h

@@ -19,7 +19,7 @@
 
 namespace manager{
 
-void cmd_build(std::filesystem::path ph,const configure& con, std::filesystem::path target_b, bool verbose, bool rele){
+void cmd_build(std::filesystem::path ph,const configure& con, init &ini, std::filesystem::path target_b, bool verbose, bool rele){
     if(!std::filesystem::exists(ph)){
         throw std::runtime_error(std::format("{} does not exists", ph.string()));
     }
@@ -72,10 +72,10 @@ void cmd_build(std::filesystem::path ph,const configure& con, std::filesystem::p
     std::string v_type{};
     if(target_b.empty()){
         if(rele){
-            build_ph = ph / "out/build/x64-release";
+            build_ph = ph / ini.default_b_r;
         }
         else {
-            build_ph = ph / "out/build/x64-debug";
+            build_ph = ph / ini.default_b_d;
         }
     }
     else {
@@ -117,6 +117,7 @@ result run_build(int argc, char *argv[], const configure& con){
     bool release = false;
     bool verbose = false;
     std::filesystem::path target{};
+    init ini{};
 
     for(int i = 2; i < argc; ++i){
         if(std::strcmp(argv[i], "--release") == 0 || std::strcmp(argv[i], "release") == 0){
@@ -154,8 +155,21 @@ result run_build(int argc, char *argv[], const configure& con){
             return {-1, std::format("{}: unknown cmd or option", argv[i])};
         }
     }
+    init_exists(pro_ph);
+    check_init(pro_ph);
 
-    manager::cmd_build(pro_ph, con, target,  verbose, release);
+        std::filesystem::path conf = pro_ph / "configuration.json";
+    std::ifstream in(conf, std::ios::in);
+    if(!in.is_open()){
+        throw std::runtime_error("Cannot read configuration.json");
+    }
+    else {
+        nlohmann::json j;
+        in >> j;
+        
+        from_json(j, ini);
+    }
+    manager::cmd_build(pro_ph, con, ini, target,  verbose, release);
     return {0, ""};
 }
     

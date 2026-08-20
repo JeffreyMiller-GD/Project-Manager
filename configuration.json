@@ -1,0 +1,6 @@
+{
+    "default_debug": "out/build/x64-debug",
+    "default_pkg": "out/packages",
+    "default_release": "out/build/x64-release",
+    "exe": "prom"
+}

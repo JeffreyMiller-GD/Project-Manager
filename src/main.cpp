@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#define PROJECT_MANAGER_VERSION "1.03"
+#define PROJECT_MANAGER_VERSION "1.04"
 
 #include <string>
 #include <string_view>
@@ -163,6 +163,8 @@ void prepare_configuration(configure& con, const std::filesystem::path& first){
             manager::write_config(con);
         }
     }
+
+
 }
 
 int main_run(int argc, char *argv[], const configure& con){
@@ -185,6 +187,7 @@ int main_run(int argc, char *argv[], const configure& con){
             std::cerr << std::format("\n\t{} update [-pj <project_root_path>] [-b <build_path>] [<build_type>]", exe.string()) << std::endl;
             std::cerr << std::format("\n\t{} pack [-pj <project_root_path>] [-b <build_path>] [<build_type>];  default build_type=release", exe.string()) << std::endl;
             std::cerr << std::format("\n\t{} run [-pj <project_root_path>] [-b <build_path>] [<build_type>] -bin <executable_name>", exe.string()) << std::endl;
+            std::cerr << std::format("\n\t{} init -pj <project_root_path>", exe.string()) << std::endl;
             std::cerr << std::format("\n\t{} --version ; show version", exe.string()) << std::endl;
             std::cerr << std::format("\n\t{} show w ; show warranty message\n\n\t{} show c ; show conditions message", exe.string(), exe.string()) << std::endl;
             std::cerr << std::format("\n\t{} help ; to show this message", exe.string());
@@ -209,6 +212,13 @@ int main_run(int argc, char *argv[], const configure& con){
         else if (cmd == "update"){
            
             manager::result res = manager::run_update(argc, argv, con);
+            if(res.code != 0){
+                std::cerr << res.msg << std::endl;
+            }
+            return res.code;
+        }
+        else if (cmd == "init"){
+            manager::result res = manager::run_init(argc, argv);
             if(res.code != 0){
                 std::cerr << res.msg << std::endl;
             }

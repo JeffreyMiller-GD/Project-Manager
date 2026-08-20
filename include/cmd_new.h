@@ -38,4 +38,4 @@ result run_new(int argc, char *argv[], const configure& con);
 };
 
 
-#endif
+#endif //cmd_new.h

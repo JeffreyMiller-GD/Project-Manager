@@ -18,7 +18,7 @@
 #include "../include/cmd_update.h"
 
 namespace manager{
-void cmd_update(std::filesystem::path ph, bool rele, const configure& con, std::filesystem::path target_b){
+void cmd_update(std::filesystem::path ph, bool rele, const configure& con, init &ini, std::filesystem::path target_b){
     if(!std::filesystem::exists(ph)){
         throw std::runtime_error(std::format("{} does not exist", ph.string()));
     }
@@ -26,14 +26,16 @@ void cmd_update(std::filesystem::path ph, bool rele, const configure& con, std::
         throw std::runtime_error(std::format("{} is not a directory", ph.string()));
     }
 
+    
+
     std::filesystem::path build_ph{};
     std::string type{};
     if(target_b.empty()){
         if(rele){
-            build_ph = ph / "out/build/x64-release";
+            build_ph = ph / ini.default_b_r;
         }
         else {
-            build_ph = ph / "out/build/x64-debug";
+            build_ph = ph / ini.default_b_d;
         }
     }
     else {
@@ -103,6 +105,7 @@ result run_update(int argc, char *argv[], const configure& con){
     std::filesystem::path pro_ph = std::filesystem::current_path();
     bool release = false;
     std::filesystem::path target{};
+    init ini{};
     for(int i = 2; i < argc; ++i){
         
         if(std::strcmp(argv[i], "--release") == 0 || std::strcmp(argv[i], "release") == 0){
@@ -137,8 +140,21 @@ result run_update(int argc, char *argv[], const configure& con){
             return {-1, std::format("{}: unknown cmd or option", argv[i])};
         }
     }
- 
-    manager::cmd_update(pro_ph, release, con, target);
+    init_exists(pro_ph);
+    check_init(pro_ph);
+    
+    std::filesystem::path conf = pro_ph / "configuration.json";
+    std::ifstream in(conf, std::ios::in);
+    if(!in.is_open()){
+        throw std::runtime_error("Cannot read configuration.json");
+    }
+    else {
+        nlohmann::json j;
+        in >> j;
+        
+        from_json(j, ini);
+    }
+    manager::cmd_update(pro_ph, release, con, ini, target);
     return {0, ""};
 }
 };

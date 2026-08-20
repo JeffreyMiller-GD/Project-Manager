@@ -33,4 +33,4 @@ namespace manager{
 void auto_get_tool(configure& con, std::array<bool, 3>& have);
 };
 
-#endif
+#endif //findtool.h

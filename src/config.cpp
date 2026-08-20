@@ -42,4 +42,36 @@ void read_config(configure& con){
     in.close();
     from_json(j, con);
 }
+
+void init_exists(const std::filesystem::path ph){
+    if(!std::filesystem::exists(ph / "configuration.json")){
+        throw std::runtime_error(std::format("{} does not exists.\n\tTry run 'init -pj <project_root_path>' command.", ph.string()));
+    }
+}
+
+void check_init(const std::filesystem::path ph){
+    auto i_ph = ph / "configuration.json";
+    std::ifstream in(i_ph, std::ios::in);
+    if(!in.is_open()){
+        throw std::runtime_error("Cannot read configuration.json");
+    }
+    nlohmann::json j{};
+    in >> j;
+    in.close();
+    init ini{};
+    from_json(j, ini);
+    if(ini.exe.empty()){
+        throw std::runtime_error("the key 'exe' is empty or does not exists\n\tTry run 'init -pj <project_root_path>' command.");
+    }
+    if(ini.default_b_d.empty()){
+        throw std::runtime_error("the key 'default_debug' is empty or does not exists\n\tTry run 'init -pj <project_root_path>' command.");
+    }
+    if(ini.default_b_r.empty()){
+        throw std::runtime_error("the key 'default_release' is empty or does not exists\n\tTry run 'init -pj <project_root_path>' command.");
+    }
+    if(ini.default_p.empty()){
+        throw std::runtime_error("the key 'default_pkg' is empty or does not exists\n\tTry run 'init -pj <project_root_path>' command."); 
+    }
+}
+
 };

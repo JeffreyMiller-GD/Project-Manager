@@ -30,10 +30,10 @@
 #include <stdexcept>
 #include "./config.h"
 namespace manager{
-void cmd_update(std::filesystem::path ph, bool rele, const configure& con, std::filesystem::path target_b);
+void cmd_update(std::filesystem::path ph, bool rele, const configure& con, init &ini, std::filesystem::path target_b);
 
 result run_update(int argc, char *argv[], const configure& con); 
 };
 
 
-#endif
+#endif //cmd_update.h

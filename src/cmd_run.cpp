@@ -1,7 +1,7 @@
 #include "../include/cmd_run.h"
 
 namespace manager{
-void cmd_run(std::filesystem::path ph,const configure& con, std::string bin, std::filesystem::path target_b, bool verbose, bool rele){
+void cmd_run(std::filesystem::path ph,const configure& con, init &ini, std::filesystem::path target_b, bool verbose, bool rele){
     if(!std::filesystem::exists(ph)){
         throw std::runtime_error(std::format("{} does not exists", ph.string()));
     }
@@ -55,17 +55,17 @@ void cmd_run(std::filesystem::path ph,const configure& con, std::string bin, std
     std::string v_type{};
     if(target_b.empty()){
         if(rele){
-            build_ph = ph / "out/build/x64-release";
-            run_para.push_back(ph.string()+"/out/build/x64-release/"+bin); 
+            build_ph = ph / ini.default_b_r;
+            run_para.push_back(ph.string()+'/'+ini.default_b_r+'/'+ini.exe); 
         }
         else {
-            build_ph = ph / "out/build/x64-debug";
-            run_para.push_back(ph.string()+"/out/build/x64-debug/"+bin); 
+            build_ph = ph / ini.default_b_d;
+            run_para.push_back(ph.string()+'/'+ini.default_b_d+'/'+ini.exe); 
         }
     }
     else {
         build_ph = target_b;
-        run_para.push_back((build_ph / bin).string()); 
+        run_para.push_back((build_ph / ini.exe).string()); 
     }
     if(verbose){
         v_type = "--verbose";
@@ -84,6 +84,7 @@ void cmd_run(std::filesystem::path ph,const configure& con, std::string bin, std
     int code = tmp_func(args);
     if(code == 0){
         std::cout << "\x1B[32;1m[Succeed]-[code=" << code << "]\x1B[0m" << std::endl;
+        std::cout << "Using the path of executable file: " << run_para.front() << std::endl;
         tmp_func(run_para);
     }
     else {
@@ -92,6 +93,7 @@ void cmd_run(std::filesystem::path ph,const configure& con, std::string bin, std
 }
 
 result run_run(int argc, char *argv[], const configure& con){
+    
     std::filesystem::path exe = argv[0];
     exe = exe.filename();
     if(argc < 3){
@@ -101,7 +103,8 @@ result run_run(int argc, char *argv[], const configure& con){
     std::filesystem::path pro_ph = std::filesystem::current_path();
     bool release = false;
     bool verbose = false;
-    std::string bin{};
+    init ini{};
+    
     std::filesystem::path target{};
     for(int i = 2; i < argc; ++i){
         if(std::strcmp(argv[i], "-pj") == 0){
@@ -114,7 +117,8 @@ result run_run(int argc, char *argv[], const configure& con){
         }
         else if (std::strcmp(argv[i], "-bin") == 0){
             if(i+1 < argc){
-                bin = argv[++i];
+                ini.exe = argv[++i];
+                
             }
             else {
                 return {-1, "The -bin option was used but no value was provided."};
@@ -147,14 +151,24 @@ result run_run(int argc, char *argv[], const configure& con){
             return {-1, std::format("{}: unknown cmd or option", argv[i])};
         }
     }
-    if(pro_ph.empty()){
-        throw std::runtime_error("The -pj option was empty.");
+    init_exists(pro_ph);
+    check_init(pro_ph);
+    
+    std::filesystem::path conf = pro_ph / "configuration.json";
+    std::ifstream in(conf, std::ios::in);
+    if(!in.is_open()){
+        throw std::runtime_error("Cannot read configuration.json");
     }
-    if(bin.empty()){
-        throw std::runtime_error("The -bin option was empty.");
+    else {
+        nlohmann::json j;
+        in >> j;
+        
+        from_json(j, ini);
     }
+    
+    std::cout << ini.exe << ": the executable\n\n";
 
-    manager::cmd_run(pro_ph, con, bin, target, verbose, release);
+    manager::cmd_run(pro_ph, con, ini, target, verbose, release);
     return {0, ""};
 }
 };

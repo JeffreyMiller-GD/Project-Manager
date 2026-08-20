@@ -110,6 +110,21 @@ void cmd_new(std::filesystem::path ph, bool rele,const configure& con, bool both
 
     out_file.close();
 
+    std::filesystem::path configuration = abs / "configuration.json";
+    init ini{};
+    ini.exe = abs.filename().string();
+    ini.default_b_d = "out/build/x64-debug";
+    ini.default_b_r = "out/build/x64-release";
+    ini.default_p = "out/packages";
+    nlohmann::json j;
+    to_json(j,ini);
+    out_file.open(configuration, std::ios::out);
+    if(!out_file.is_open()){
+        throw std::runtime_error("Can not make configuration.json");
+    }
+    out_file << std::setw(4) << j;
+    out_file.close();
+
     auto tmp_func = [&](const std::vector<std::string>& args) -> int {
         boost::process::v1::ipstream output;
         boost::process::v1::ipstream e_output;

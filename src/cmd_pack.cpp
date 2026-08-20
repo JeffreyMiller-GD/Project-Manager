@@ -18,7 +18,7 @@
 #include "../include/cmd_pack.h"
 
 namespace manager{
-void cmd_pack(std::filesystem::path ph, bool debug, const configure& con, std::filesystem::path target_b){
+void cmd_pack(std::filesystem::path ph, bool debug, const configure& con, init &ini, std::filesystem::path target_b){
     if(!std::filesystem::exists(ph)){
         throw std::runtime_error(std::format("{} does not exists", ph.string()));
     }
@@ -28,17 +28,20 @@ void cmd_pack(std::filesystem::path ph, bool debug, const configure& con, std::f
     std::filesystem::path build_ph{};
     if(target_b.empty()){
         if(!debug){
-            build_ph = ph / "out/build/x64-release/CPackConfig.cmake";
+            build_ph = ph / (ini.default_b_r + "/" + "CPackConfig.cmake");
         }
         else {
-            build_ph = ph / "out/build/x64-debug/CPackConfig.cmake";
+            build_ph = ph / (ini.default_b_d + "/" + "CPackConfig.cmake");
         }
     }
     else {
         build_ph = target_b / "CPackConfig.cmake";
     }
 
-    std::filesystem::path packages = ph / "out/packages";
+    std::filesystem::path packages = ph / ini.default_p;
+    packages = std::filesystem::absolute(packages);
+    build_ph = std::filesystem::absolute(build_ph);
+
     auto tmp_func = [&](const std::vector<std::string>& args) -> int {
         boost::process::v1::ipstream output;
         boost::process::v1::ipstream e_output;
@@ -73,7 +76,7 @@ void cmd_pack(std::filesystem::path ph, bool debug, const configure& con, std::f
         build_ph.string(),
         "-B", packages.string()
     };
-  
+
     int code = tmp_func(args);
     if(code == 0){
         std::cout << "\x1B[32;1m[Succeed]-[code=" << code << "]\x1B[0m" << std::endl;
@@ -93,6 +96,7 @@ result run_pack(int argc, char *argv[], const configure& con){
     std::filesystem::path pro_ph = std::filesystem::current_path();
     bool debug = false;
     std::filesystem::path target{};
+    init ini{};
 
     for(int i = 2; i < argc; ++i){
         if(std::strcmp(argv[i], "--release") == 0 || std::strcmp(argv[i], "release") == 0){
@@ -128,10 +132,23 @@ result run_pack(int argc, char *argv[], const configure& con){
             return {-1, std::format("{}: unknown cmd or option", argv[i])};
         }
     }
-    if(pro_ph.empty()){
-        throw std::runtime_error("The -pj option was empty.");
+    init_exists(pro_ph);
+    check_init(pro_ph);
+
+    std::filesystem::path conf = pro_ph / "configuration.json";
+    std::ifstream in(conf, std::ios::in);
+    if(!in.is_open()){
+        throw std::runtime_error("Cannot read configuration.json");
     }
-    manager::cmd_pack(pro_ph, debug, con, target);
+    else {
+        nlohmann::json j;
+        in >> j;
+        
+        from_json(j, ini);
+    }
+
+
+    manager::cmd_pack(pro_ph, debug, con, ini, target);
     return {0, ""};
 }
 

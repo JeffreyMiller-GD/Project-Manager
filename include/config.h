@@ -56,6 +56,32 @@ public:
     }
 };
 
+class init {
+public:
+    std::string exe;
+    std::string default_b_d;
+    std::string default_b_r;
+    std::string default_p;
+
+
+    init() : exe(), default_b_d(), default_b_r(){}
+    init(std::string ex, std::string d, std::string r, std::string p)
+        : exe(ex), default_b_d(d), default_b_r(r), default_p(p){}
+    ~init() = default;
+
+    std::ostream& operator<<(std::ostream& os){
+        os << exe << "; " << default_b_d << "; " << default_b_r << "; " << default_p;
+        return os; 
+    }
+
+    void clear(){
+        exe.clear();
+        default_b_d.clear();
+        default_b_r.clear();
+    }
+};
+
+
 class result{
 public:
     int code;
@@ -214,7 +240,6 @@ inline std::vector<std::string> get_rc(bool enable){
 
 inline void to_json(nlohmann::json &j, const configure& con){
     j = nlohmann::json{
-       
         {"cmake", con.cmake_ph},
         {"ninja", con.ninja_ph},
         {"cpack", con.cpack_ph},
@@ -227,6 +252,27 @@ inline void from_json(const nlohmann::json &j, configure& con) {
     con.cpack_ph = j.value("cpack", "");
 }
 
+inline void to_json(nlohmann::json &j, const init & ph) {
+    j = nlohmann::json{
+        {"exe", ph.exe},
+        {"default_debug", ph.default_b_d},
+        {"default_release", ph.default_b_r},
+        {"default_pkg", ph.default_p},
+    };
+}
+
+inline void from_json(const nlohmann::json &j, init &ph){
+    ph.exe = j.value("exe", "");
+    ph.default_b_d = j.value("default_debug", "");
+    ph.default_b_r = j.value("default_release", "");
+    ph.default_p = j.value("default_pkg", "");
+}
+
+void init_exists(const std::filesystem::path ph);
+
+void check_init(const std::filesystem::path ph);
+
+
 void write_config(const configure& con);
 void read_config(configure& con);
 
@@ -234,4 +280,4 @@ void read_config(configure& con);
 };
 
 
-#endif
+#endif //config.h

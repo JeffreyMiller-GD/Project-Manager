@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 cmake_minimum_required(VERSION 3.25)
-project(project_manager VERSION 1.03 LANGUAGES CXX)
+project(project_manager VERSION 1.04 LANGUAGES CXX)
 
 # ============================================================================
 # Boost Configuration
@@ -81,6 +81,7 @@ add_executable(prom
     src/cmd_run.cpp
     src/config.cpp
     src/findtool.cpp
+    src/cmd_init.cpp
     ${APP_ICON_RESOURCE}
 )
 

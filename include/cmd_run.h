@@ -15,7 +15,7 @@
 
 namespace manager{
 
-void cmd_run(std::filesystem::path ph,const configure& con, std::string bin, std::filesystem::path target_b, bool verbose = false, bool rele = false);
+void cmd_run(std::filesystem::path ph,const configure& con, init &ini, std::filesystem::path target_b, bool verbose = false, bool rele = false);
 
 result run_run(int argc, char *argv[], const configure& con);
 
@@ -23,4 +23,4 @@ result run_run(int argc, char *argv[], const configure& con);
 };
 
 
-#endif
+#endif //cmd_run.h
